@@ -29,11 +29,9 @@ public class Main {
                     correctFileCount++;
                     System.out.println("Путь указан верно");
                     System.out.println("Это файл номер " + correctFileCount);
-
                     int totalLines = 0;
-                    int minLength = Integer.MAX_VALUE;
-                    int maxLength = 0;
-
+                    int yandexCount = 0;
+                    int googleCount = 0;
                     try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
                         String line;
                         int lineNumber = 0;
@@ -47,22 +45,26 @@ public class Main {
                                 );
                             }
                             totalLines++;
-                            if (length < minLength) {
-                                minLength = length;
-                            }
-                            if (length > maxLength) {
-                                maxLength = length;
+
+                            String agent = extractAgentFromUserAgent(line);
+                            if ("YandexBot".equals(agent)) {
+                                yandexCount++;
+                            } else if ("Googlebot".equals(agent)) {
+                                googleCount++;
                             }
                         }
+
                         if (totalLines == 0) {
                             System.out.println("Файл пустой.");
                         } else {
-                            System.out.println("Всего строк: " + totalLines);
-                            System.out.println("Длина самой короткой строки: " + minLength);
-                            System.out.println("Длина самой длинной строки: " + maxLength);
+                            double yandexShare = (yandexCount * 100.0) / totalLines;
+                            double googleShare = (googleCount * 100.0) / totalLines;
+
+                            System.out.println("Всего запросов (строк): " + totalLines);
+                            System.out.println("YandexBot: " + yandexCount + " (" + String.format("%.2f", yandexShare) + "%)");
+                            System.out.println("Googlebot: " + googleCount + " (" + String.format("%.2f", googleShare) + "%)");
                         }
-                    }
-                    catch (LongLineException e) {
+                    } catch (LongLineException e) {
                         System.out.println(e.getMessage());
                     } catch (IOException e) {
                         System.out.println("Ошибка чтения файла: " + e.getMessage());
@@ -71,4 +73,25 @@ public class Main {
             }
         }
     }
+                private static String extractAgentFromUserAgent (String line){
+                    int open = line.indexOf('(');
+                    int close = line.indexOf(')', open + 1);
+                    if (open == -1 || close == -1) {
+                        return null;
+                    }
+
+                    String inBrackets = line.substring(open + 1, close);
+                    String[] parts = inBrackets.split(";");
+                    if (parts.length < 2) {
+                        return null;
+                    }
+
+                    String second = parts[1].trim();
+                    int slash = second.indexOf('/');
+                    if (slash == -1) {
+                        return second;
+                    }
+                    return second.substring(0, slash);
+                }
 }
+
