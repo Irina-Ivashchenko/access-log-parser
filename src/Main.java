@@ -1,5 +1,9 @@
 import java.io.File;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -25,6 +29,44 @@ public class Main {
                     correctFileCount++;
                     System.out.println("Путь указан верно");
                     System.out.println("Это файл номер " + correctFileCount);
+
+                    int totalLines = 0;
+                    int minLength = Integer.MAX_VALUE;
+                    int maxLength = 0;
+
+                    try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                        String line;
+                        int lineNumber = 0;
+                        while ((line = reader.readLine()) != null) {
+                            lineNumber++;
+                            int length = line.length();
+                            if (length > 1024) {
+                                throw new LongLineException(
+                                        "Ошибка: строка длиннее 1024 символов (файл: " + path + ", номер строки: "
+                                                + lineNumber + ", длина: " + length + ")"
+                                );
+                            }
+                            totalLines++;
+                            if (length < minLength) {
+                                minLength = length;
+                            }
+                            if (length > maxLength) {
+                                maxLength = length;
+                            }
+                        }
+                        if (totalLines == 0) {
+                            System.out.println("Файл пустой.");
+                        } else {
+                            System.out.println("Всего строк: " + totalLines);
+                            System.out.println("Длина самой короткой строки: " + minLength);
+                            System.out.println("Длина самой длинной строки: " + maxLength);
+                        }
+                    }
+                    catch (LongLineException e) {
+                        System.out.println(e.getMessage());
+                    } catch (IOException e) {
+                        System.out.println("Ошибка чтения файла: " + e.getMessage());
+                    }
                 }
             }
         }
